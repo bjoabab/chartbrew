@@ -1,6 +1,5 @@
 // set up the encryption keys first, then load .env file
-const setUpEncryptionKeys = require("./modules/setUpEncryptionKeys"); // eslint-disable-line
-
+const { setUpEncryptionKeys } = require("./modules/setUpEncryptionKeys");
 setUpEncryptionKeys();
 
 const path = require("path");

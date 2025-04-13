@@ -9,8 +9,12 @@ function generateAESKey() {
   return crypto.randomBytes(32).toString("hex");
 }
 
-// Read the .env file, update the CB_ENCRYPTION_KEY variable, or add it if it doesn't exist
 async function updateKeys(envVar) {
+  // ✅ First: check if Railway env has it
+  if (process.env[envVar] && process.env[envVar].length === 64) {
+    return; // Key exists, do nothing
+  }
+
   try {
     const data = await fs.readFile(envPath, "utf8");
 
@@ -19,34 +23,22 @@ async function updateKeys(envVar) {
     const match = data.match(keyRegex);
 
     if (match) {
-      // envVar exists
       if (match[1]) {
-        // envVar has a value, do nothing
         return;
       } else {
-        // 'envVar=' found but no value, update the key
         updatedData = data.replace(keyRegex, `${envVar}=${generateAESKey()}`);
         console.log(`Set up encryption key ${envVar}`); // eslint-disable-line
       }
     } else {
-      // envVar not found, add the variable and the generated key
       updatedData = `${data.trim()}\n${envVar}=${generateAESKey()}\n`;
       console.log(`Set up encryption key ${envVar}`); // eslint-disable-line
     }
 
-    // Write the updates back to the .env file
     await fs.writeFile(envPath, updatedData, "utf8");
   } catch (e) {
-    console.error("The encryption key could not be set up. Please ensure you have CB_ENCRYPTION_KEY_DEV and CB_ENCRYPTION_KEY in your .env file."); // eslint-disable-line
+    console.error(`Encryption key '${envVar}' not found and .env update failed`); // eslint-disable-line
   }
 }
-
-module.exports = async () => {
-  await updateKeys("CB_ENCRYPTION_KEY_DEV");
-  await updateKeys("CB_ENCRYPTION_KEY");
-
-  return true;
-};
 
 updateKeys("CB_ENCRYPTION_KEY_DEV");
 updateKeys("CB_ENCRYPTION_KEY");
